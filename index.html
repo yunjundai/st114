@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>學生登入輔助系統</title>
+  <style>
+    :root {
+      --primary-blue: #007aff;
+      --step2-yellow: #ffcc00;
+      --success-green: #34c759;
+      --danger-red: #ff3b30;
+      --bg-gray: #f2f2f7;
+    }
+
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background-color: var(--bg-gray); 
+      margin: 0; 
+      padding: 8px; /* 縮小網頁邊距 */
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container { 
+      max-width: 800px; 
+      margin: 0 auto; 
+      background: white; 
+      padding: 12px; /* 縮小容器內距 */
+      border-radius: 12px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    h2 { 
+      text-align: center; 
+      color: #1c1c1e; 
+      margin: 0 0 12px 0; /* 縮小標題間距 */
+      font-size: 1.25rem;
+    }
+
+    /* 頂部按鈕區塊縮小 */
+    .nav-header { 
+      display: flex; 
+      gap: 8px; 
+      margin-bottom: 12px; 
+    }
+    .nav-btn {
+      flex: 1; 
+      text-decoration: none; 
+      padding: 10px 6px; /* 縮小按鈕高度 */
+      border-radius: 8px;
+      text-align: center; 
+      font-weight: bold; 
+      font-size: 15px; 
+      transition: 0.2s;
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .nav-btn small { 
+      font-weight: normal; 
+      font-size: 11px; 
+      margin-top: 2px; 
+      opacity: 0.8; 
+    }
+    .btn-step1 { background-color: var(--primary-blue); color: white; }
+    .btn-step2 { background-color: var(--step2-yellow); color: #000; }
+    .nav-btn:active { transform: scale(0.98); }
+
+    /* 表格緊湊化 */
+    .table-container { 
+      overflow-x: auto; 
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 400px; }
+    th { 
+      background: #f8f8f8; 
+      padding: 8px 4px; 
+      text-align: center; 
+      color: #666; 
+      font-size: 13px; 
+      border-bottom: 1px solid #ddd; 
+    }
+    td { 
+      padding: 6px 4px; /* 縮小單元格間距 */
+      text-align: center; 
+      border-bottom: 1px solid #f0f0f0; 
+      font-size: 15px; 
+    }
+    .student-name { font-weight: 600; color: #1c1c1e; }
+
+    /* 複製按鈕縮小 */
+    .btn-action {
+      border: 1px solid #ccc; 
+      padding: 6px 10px; 
+      border-radius: 6px;
+      font-weight: bold; 
+      font-size: 13px; 
+      cursor: pointer; 
+      background: white;
+      transition: all 0.1s; 
+      min-width: 70px; 
+      margin: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-acc { color: var(--primary-blue); border-color: var(--primary-blue); }
+    .btn-pw { color: var(--danger-red); border-color: var(--danger-red); }
+    .btn-action.copied { background-color: var(--success-green); color: white; border-color: var(--success-green); }
+
+    .status-msg { text-align: center; padding: 20px; color: #888; font-size: 16px; }
+
+    @media (max-width: 600px) {
+      .nav-header { flex-direction: column; }
+      .nav-btn { padding: 12px 8px; }
+      td { font-size: 14px; }
+      .btn-action { min-width: 65px; padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🎒 學生登入小幫手</h2>
+
+  <div class="nav-header">
+    <a href="https://hcc.sso.edu.tw/auth-server-login?Auth_Request_RedirectUri=https%253A%252F%252Foidc.tanet.edu.tw%252Fcncreturnpage&Auth_Request_State=-7PSV3LwOQYbdMmv4RIJBgvPQq1umm5LSZgXz3eNuuc&Auth_Request_Response_Type=code&Auth_Request_Client_ID=cf789350df91c914eede027ce55f3ab5&Auth_Request_Nonce=4Y9EOaWDWWWbwUw8BqqBx_Fcsjve2xzMOE68SNumwO0&Auth_Request_Scope=openid+exchangedata&local=true" 
+       target="_blank" class="nav-btn btn-step1">
+      Step 1. 開啟 SSO 登入
+      <small>(點我後準備貼上)</small>
+    </a>
+    <a href="https://adl.edu.tw/HomePage/home/" 
+       target="_blank" class="nav-btn btn-step2">
+      Step 2. 進入因材網
+      <small>(登入成功後點我)</small>
+    </a>
+  </div>
+
+  <div id="status" class="status-msg">⏳ 同步資料中...</div>
+
+  <div class="table-container">
+    <table id="studentTable" style="display:none;">
+      <thead>
+        <tr>
+          <th width="15%">座號</th>
+          <th width="25%">姓名</th>
+          <th>複製操作</th>
+        </tr>
+      </thead>
+      <tbody id="studentList"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // 使用您提供的 GAS 網址
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbywYAC5jPkIjnxHJHXWhn86JmLd6VKzxXRDhbYW-BA2ABjX3pjysxVpa4itjrcigFbI/exec";
+
+  window.onload = () => {
+    fetchStudentData();
+  };
+
+  async function fetchStudentData() {
+    try {
+      const response = await fetch(GAS_API_URL);
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      renderTable(data);
+      document.getElementById('status').style.display = 'none';
+      document.getElementById('studentTable').style.display = 'table';
+    } catch (err) {
+      document.getElementById('status').innerHTML = "❌ 載入失敗，請確認網路或 GAS 設定";
+    }
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('studentList');
+    tbody.innerHTML = "";
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      // row[1]: 座號, row[2]: 姓名, row[3]: 帳號, row[4]: 密碼
+      tr.innerHTML = `
+        <td>${row[1]}</td>
+        <td class="student-name">${row[2]}</td>
+        <td>
+          <button class="btn-action btn-acc" onclick="copyValue(this, '${row[3]}', '帳號')">帳號</button>
+          <button class="btn-action btn-pw" onclick="copyValue(this, '${row[4]}', '密碼')">密碼</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function copyValue(btn, text, label) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    document.body.appendChild(el);
+    el.select();
+    el.setSelectionRange(0, 99999);
+    
+    try {
+      document.execCommand('copy');
+      const originalText = label;
+      btn.innerText = "OK!";
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerText = originalText;
+        btn.classList.remove('copied');
+      }, 1500);
+    } catch (err) {
+      alert("複製失敗");
+    }
+    document.body.removeChild(el);
+  }
+</script>
+
+</body>
+</html>
